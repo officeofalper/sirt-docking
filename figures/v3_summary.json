@@ -1,0 +1,103 @@
+{
+ "rows": [
+  {
+   "pdb": "4RMH",
+   "kind": "holo",
+   "bound": true,
+   "pocket": "SirReal2 ile acik",
+   "clash": 0,
+   "energy": -11.619,
+   "rmsd": 0.350532741408349,
+   "best_rmsd": 0.34404849801077697,
+   "score": -12.186000000000002,
+   "score_sd": 0.017435595774162323,
+   "success": 1.0
+  },
+  {
+   "pdb": "4RMG",
+   "kind": "holo",
+   "bound": true,
+   "pocket": "SirReal2 ile acik",
+   "clash": 0,
+   "energy": -9.301,
+   "rmsd": 0.8971309464774697,
+   "best_rmsd": 0.8971309464774697,
+   "score": -10.914000000000001,
+   "score_sd": 0.47255052639902945,
+   "success": 0.6
+  },
+  {
+   "pdb": "9FDR",
+   "kind": "apo-open",
+   "bound": false,
+   "pocket": "ligandsiz acik",
+   "clash": 7,
+   "energy": 45.036,
+   "rmsd": 3.4805636426652793,
+   "best_rmsd": 3.2150857190562716,
+   "score": -10.495999999999999,
+   "score_sd": 0.013564659966250248,
+   "success": 0.0
+  },
+  {
+   "pdb": "5MAT",
+   "kind": "induced",
+   "bound": true,
+   "pocket": "7KJ ile acik",
+   "clash": 9,
+   "energy": 56.704,
+   "rmsd": 9.669909826517202,
+   "best_rmsd": 8.707915068900672,
+   "score": -12.450000000000001,
+   "score_sd": 0.18558017135459304,
+   "success": 0.0
+  },
+  {
+   "pdb": "3ZGV",
+   "kind": "other",
+   "bound": true,
+   "pocket": "kismen",
+   "clash": 12,
+   "energy": 122.845,
+   "rmsd": 9.678833869824365,
+   "best_rmsd": 5.000151078171217,
+   "score": -10.122800000000002,
+   "score_sd": 0.3757969664592839,
+   "success": 0.0
+  },
+  {
+   "pdb": "1J8F",
+   "kind": "apo",
+   "bound": false,
+   "pocket": "kapali",
+   "clash": 26,
+   "energy": 188.368,
+   "rmsd": 11.208626589054708,
+   "best_rmsd": 9.531278260582134,
+   "score": -8.706399999999999,
+   "score_sd": 0.0528946122020003,
+   "success": 0.0
+  },
+  {
+   "pdb": "3ZGO",
+   "kind": "apo",
+   "bound": false,
+   "pocket": "kapali",
+   "clash": 27,
+   "energy": 186.711,
+   "rmsd": 8.379815060611644,
+   "best_rmsd": 8.379815060611644,
+   "score": -8.5216,
+   "score_sd": 0.28433402891669496,
+   "success": 0.0
+  }
+ ],
+ "spearman_clash": [
+  0.7748062179181807,
+  0.040769462520420366
+ ],
+ "spearman_bound": [
+  -0.28867513459481287,
+  0.5300916186704534
+ ]
+}

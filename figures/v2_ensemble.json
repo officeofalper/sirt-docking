@@ -1,0 +1,135 @@
+{
+ "ensembles": {
+  "4RMH only": {
+   "members": [
+    "4RMH"
+   ],
+   "rmsd_med": 0.350532741408349,
+   "rmsd_min": 0.3154661563103409,
+   "rmsd_max": 0.37270328553007376,
+   "success": 1.0,
+   "oracle_med": 0.350532741408349,
+   "oracle_success": 1.0,
+   "chosen": [
+    "4RMH",
+    "4RMH",
+    "4RMH",
+    "4RMH",
+    "4RMH"
+   ],
+   "n_struct": 1
+  },
+  "1J8F only": {
+   "members": [
+    "1J8F"
+   ],
+   "rmsd_med": 11.208626589054708,
+   "rmsd_min": 11.16313826925441,
+   "rmsd_max": 11.298072561652281,
+   "success": 0.0,
+   "oracle_med": 11.208626589054708,
+   "oracle_success": 0.0,
+   "chosen": [
+    "1J8F",
+    "1J8F",
+    "1J8F",
+    "1J8F",
+    "1J8F"
+   ],
+   "n_struct": 1
+  },
+  "apo_strict": {
+   "members": [
+    "1J8F",
+    "3ZGO"
+   ],
+   "rmsd_med": 11.208626589054708,
+   "rmsd_min": 11.16313826925441,
+   "rmsd_max": 11.298072561652281,
+   "success": 0.0,
+   "oracle_med": 8.379815060611644,
+   "oracle_success": 0.0,
+   "chosen": [
+    "1J8F",
+    "1J8F",
+    "1J8F",
+    "1J8F",
+    "1J8F"
+   ],
+   "n_struct": 2
+  },
+  "apo_only": {
+   "members": [
+    "1J8F",
+    "3ZGO",
+    "3ZGV"
+   ],
+   "rmsd_med": 9.678833869824365,
+   "rmsd_min": 5.946944174865381,
+   "rmsd_max": 9.7007455612001,
+   "success": 0.0,
+   "oracle_med": 8.379815060611644,
+   "oracle_success": 0.0,
+   "chosen": [
+    "3ZGV",
+    "3ZGV",
+    "3ZGV",
+    "3ZGV",
+    "3ZGV"
+   ],
+   "n_struct": 3
+  },
+  "no_self": {
+   "members": [
+    "4RMG",
+    "1J8F",
+    "3ZGO",
+    "3ZGV"
+   ],
+   "rmsd_med": 0.8971309464774697,
+   "rmsd_min": 0.7418989828120609,
+   "rmsd_max": 8.406356749492877,
+   "success": 0.6,
+   "oracle_med": 0.8971309464774697,
+   "oracle_success": 0.6,
+   "chosen": [
+    "4RMG",
+    "4RMG",
+    "4RMG",
+    "4RMG",
+    "4RMG"
+   ],
+   "n_struct": 4
+  },
+  "all5": {
+   "members": [
+    "4RMH",
+    "4RMG",
+    "1J8F",
+    "3ZGO",
+    "3ZGV"
+   ],
+   "rmsd_med": 0.350532741408349,
+   "rmsd_min": 0.3154661563103409,
+   "rmsd_max": 0.37270328553007376,
+   "success": 1.0,
+   "oracle_med": 0.350532741408349,
+   "oracle_success": 1.0,
+   "chosen": [
+    "4RMH",
+    "4RMH",
+    "4RMH",
+    "4RMH",
+    "4RMH"
+   ],
+   "n_struct": 5
+  }
+ },
+ "score_rank": [
+  "4RMH",
+  "4RMG",
+  "3ZGV",
+  "1J8F",
+  "3ZGO"
+ ]
+}

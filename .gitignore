@@ -1,0 +1,5 @@
+work/
+__pycache__/
+*.pyc
+*.docx
+structures/4I5I.pdb
