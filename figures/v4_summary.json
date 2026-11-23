@@ -1,0 +1,92 @@
+{
+ "rows": [
+  {
+   "pdb": "4RMH",
+   "tanimoto": 1.0,
+   "label": "SirReal2 (self)",
+   "rmsd": 0.350532741408349,
+   "score": -12.186000000000002,
+   "score_sd": 0.017435595774162323,
+   "clash": 0,
+   "energy": -11.619,
+   "success": 1.0
+  },
+  {
+   "pdb": "4RMG",
+   "tanimoto": 1.0,
+   "label": "SirReal2, other crystal",
+   "rmsd": 0.8971309464774697,
+   "score": -10.914000000000001,
+   "score_sd": 0.47255052639902945,
+   "clash": 0,
+   "energy": -9.301,
+   "success": 0.6
+  },
+  {
+   "pdb": "5DY4",
+   "tanimoto": 0.814,
+   "label": "brominated SirReal",
+   "rmsd": 0.5182129924977096,
+   "score": -11.342,
+   "score_sd": 0.07386474125047736,
+   "clash": 0,
+   "energy": -10.425,
+   "success": 1.0
+  },
+  {
+   "pdb": "5DY5",
+   "tanimoto": 0.558,
+   "label": "SirReal probe",
+   "rmsd": 0.4853368598559319,
+   "score": -11.618,
+   "score_sd": 0.03969886648255834,
+   "clash": 0,
+   "energy": -10.121,
+   "success": 1.0
+  },
+  {
+   "pdb": "5YQL",
+   "tanimoto": 0.463,
+   "label": "shared head group",
+   "rmsd": 0.5849421635584402,
+   "score": -11.364,
+   "score_sd": 0.03666060555964673,
+   "clash": 0,
+   "energy": -10.191,
+   "success": 1.0
+  },
+  {
+   "pdb": "5MAT",
+   "tanimoto": 0.235,
+   "label": "thienopyrimidinone",
+   "rmsd": 9.669909826517202,
+   "score": -12.450000000000001,
+   "score_sd": 0.18558017135459304,
+   "clash": 9,
+   "energy": 56.704,
+   "success": 0.0
+  },
+  {
+   "pdb": "9FDT",
+   "tanimoto": 0.194,
+   "label": "pyrazole fragment",
+   "rmsd": 8.914631846696988,
+   "score": -10.815999999999999,
+   "score_sd": 0.03666060555964658,
+   "clash": 6,
+   "energy": 24.313,
+   "success": 0.0
+  },
+  {
+   "pdb": "5Y0Z",
+   "tanimoto": 0.12,
+   "label": "NPD11033",
+   "rmsd": 8.45588441768172,
+   "score": -10.484,
+   "score_sd": 0.03720215047547627,
+   "clash": 7,
+   "energy": 42.284,
+   "success": 0.0
+  }
+ ]
+}

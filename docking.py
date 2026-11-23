@@ -49,11 +49,25 @@ COFACTOR = {"NAD", "NAI", "APR", "ADP", "ATP", "CRC", "ZN"}
 # 1. Reading the PDB entry
 # ---------------------------------------------------------------------------
 def read_pdb(pdb_id):
-    path = os.path.join(STRUCT, f"{pdb_id.upper()}.pdb")
+    """Read a structure, converting from mmCIF when no legacy PDB file exists.
+
+    RCSB no longer generates .pdb for some recent depositions (9FDT is one),
+    so the .cif is converted once and cached beside it.
+    """
+    pid = pdb_id.upper()
+    path = os.path.join(STRUCT, f"{pid}.pdb")
     if not os.path.exists(path):
-        raise FileNotFoundError(
-            f"{path} not found. Download it from "
-            f"https://files.rcsb.org/download/{pdb_id.upper()}.pdb")
+        cif = os.path.join(STRUCT, f"{pid}.cif")
+        if os.path.exists(cif):
+            import gemmi
+            st = gemmi.read_structure(cif)
+            st.setup_entities()
+            st.write_pdb(path)
+        else:
+            raise FileNotFoundError(
+                f"{path} not found. Download it from "
+                f"https://files.rcsb.org/download/{pid}.pdb "
+                f"(or {pid}.cif if no PDB file is offered).")
     with open(path) as f:
         return f.readlines()
 

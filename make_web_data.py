@@ -10,19 +10,29 @@ import docking as D
 
 META = {
     "4RMH": {"kind": "holo", "res": 1.42, "bound": "SirReal2 + asetil-lizin peptidi",
-             "label": "kendi kristali", "sirreal": True},
+             "label": "kendi kristali", "sirreal": True, "tan": 1.000},
     "4RMG": {"kind": "holo", "res": 1.88, "bound": "SirReal2 + NAD+",
-             "label": "ikinci kristal formu", "sirreal": True},
+             "label": "ikinci kristal formu", "sirreal": True, "tan": 1.000},
     "1J8F": {"kind": "apo", "res": 1.70, "bound": "yok",
-             "label": "apo", "sirreal": False},
+             "label": "apo", "sirreal": False, "tan": None},
     "3ZGO": {"kind": "apo", "res": 1.63, "bound": "yok",
-             "label": "apo, bağımsız kristal", "sirreal": False},
+             "label": "apo, bağımsız kristal", "sirreal": False, "tan": None},
     "3ZGV": {"kind": "other", "res": 2.27, "bound": "ADP-riboz",
-             "label": "ürün bağlı", "sirreal": False},
+             "label": "ürün bağlı", "sirreal": False, "tan": None},
     "5MAT": {"kind": "induced", "res": 2.07, "bound": "7KJ (tienopirimidinon)",
-             "label": "farklı ligandın açtığı cep", "sirreal": False},
+             "label": "farklı ligandın açtığı cep", "sirreal": False, "tan": 0.235},
     "9FDR": {"kind": "apo-open", "res": 1.25, "bound": "yok",
-             "label": "ligandsız ama cep açık", "sirreal": False},
+             "label": "ligandsız ama cep açık", "sirreal": False, "tan": None},
+    "5DY4": {"kind": "induced", "res": 1.77, "bound": "5GN (bromlu SirReal analoğu)",
+             "label": "neredeyse aynı ligand", "sirreal": False, "tan": 0.814},
+    "5DY5": {"kind": "induced", "res": 1.95, "bound": "5GR (SirReal afinite probu)",
+             "label": "aynı çekirdek, uzun kuyruk", "sirreal": False, "tan": 0.558},
+    "5YQL": {"kind": "induced", "res": 1.60, "bound": "A2I (ortak başlık grubu)",
+             "label": "kısmen benzer ligand", "sirreal": False, "tan": 0.463},
+    "9FDT": {"kind": "induced", "res": 1.60, "bound": "A1IBW (pirazol fragmanı)",
+             "label": "küçük, çok farklı ligand", "sirreal": False, "tan": 0.194},
+    "5Y0Z": {"kind": "induced", "res": 2.00, "bound": "8K9 (NPD11033)",
+             "label": "akraba olmayan sınıf", "sirreal": False, "tan": 0.120},
 }
 
 
@@ -31,8 +41,9 @@ def main():
     sweep = json.load(open(os.path.join(D.FIG, "v2_sweep.json")))["rows"]
     fit = json.load(open(os.path.join(D.FIG, "v2_pocketfit.json")))["rows"]
     v3 = json.load(open(os.path.join(D.FIG, "v3_results.json")))
-    v1 = dict(v1) | v3["results"]          # versions 1 and 3 share ligand, box, seeds
-    fit = fit + v3["fit"]
+    v4 = json.load(open(os.path.join(D.FIG, "v4_results.json")))
+    v1 = dict(v1) | v3["results"] | v4["results"]   # same ligand, box and seeds throughout
+    fit = fit + v3["fit"] + v4["fit"]
 
     top = {p: {r["seed"]: [round(r["scores"][0], 2), round(r["rmsds"][0], 2)]
                for r in v1[p]["runs"]} for p in v1}

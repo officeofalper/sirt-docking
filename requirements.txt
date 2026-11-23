@@ -3,3 +3,4 @@ meeko
 numpy
 scipy
 matplotlib
+gemmi

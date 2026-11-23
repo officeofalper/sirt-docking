@@ -10,11 +10,11 @@
 
 **Companion projects:** [binding-affinity-leakage](https://github.com/officeofalper/binding-affinity-leakage) (does the model learn binding or memorise the benchmark?), [cancer-flux-balance](https://github.com/officeofalper/cancer-flux-balance) and [tme-glucose-competition](https://github.com/officeofalper/tme-glucose-competition). That project asked whether a reported accuracy is real. This one asks something narrower and more physical: whether the input a docking program is given can support a correct answer at all.
 
-| | Version 1: `redock_crossdock.py` | Version 2: `effort_sweep.py`, `ensemble.py`, `pocket_fit.py` | Version 3: `v3_newstructures.py` |
-|---|---|---|---|
-| Question | Does docking find the right pose when the receptor conformation is wrong? | Can anything fix it — and why does it fail? | Is the problem the missing ligand, or the closed pocket? |
-| Design | One ligand, five SIRT2 conformations, five random seeds | Search effort 8→64; six ensembles; the crystal pose scored in every receptor | Two further structures that break the tie between those two variables |
-| Output | Figures 1–2 | Figures 3–6 | Figure 7 |
+| | Version 1: `redock_crossdock.py` | Version 2: `effort_sweep.py`, `ensemble.py`, `pocket_fit.py` | Version 3: `v3_newstructures.py` | Version 4: `v4_similarity.py` |
+|---|---|---|---|---|
+| Question | Does docking find the right pose when the receptor conformation is wrong? | Can anything fix it — and why does it fail? | Is the problem the missing ligand, or the closed pocket? | Can you tell which receptor to trust *before* docking? |
+| Design | One ligand, five SIRT2 conformations, five random seeds | Search effort 8→64; six ensembles; the crystal pose scored in every receptor | Two further structures that break the tie between those two variables | Five further co-crystals spanning the chemical-similarity range of the ligand that shaped the pocket |
+| Output | Figures 1–2 | Figures 3–6 | Figure 7 | Figure 8 |
 
 ---
 
@@ -23,7 +23,7 @@
 | What my review says | How this repository tests it |
 |---|---|
 | Docking treats the receptor as rigid, so it cannot represent induced fit; this is listed as a central limitation of structure-based virtual screening (Section 3). | SirReal2 is docked into the structure it came from and into four other conformations of the same protein. Re-docking reaches 0.35 Å; the apo structures reach 8–11 Å and never succeed. |
-| Scoring functions are the weak link: they rank poses imperfectly and correlate only loosely with measured affinity (Section 3.2). | The score falls by only 3.5 kcal/mol between the structure where docking works and the ones where it fails — not enough to flag the failure. The score-versus-RMSD funnel that exists for the correct receptor disappears for the wrong one. |
+| Scoring functions are the weak link: they rank poses imperfectly and correlate only loosely with measured affinity (Section 3.2). | The score falls by only 3.5 kcal/mol between the structure where docking works and the ones where it fails. Across eight receptors the score ranges overlap completely, and the best score of all belongs to a pose that is 9.7 Å wrong. |
 | Ensemble docking and flexible-receptor methods are proposed as remedies (Section 3.4). | Six ensembles are compared. Ensemble docking can only interpolate among the conformations it is given, and version 3 shows that adding a structure can make it *worse*: a receptor that scores better can be the one that is more wrong. |
 | Hybrid physics-plus-machine-learning approaches are presented as the direction of travel (Section 6). | Not tested here. This repository is about what the physics-based half is and is not doing. |
 
@@ -56,8 +56,17 @@ Every structure is superposed onto 4RMH by Cα Kabsch alignment, then reduced to
 | **3ZGV** | 2.27 Å | ADP-ribose (reaction product) | a third conformational state |
 | **5MAT** | 2.07 Å | 7KJ, a thienopyrimidinone | ligand bound, pocket open — but opened by a different chemotype |
 | **9FDR** | 1.25 Å | nothing | no ligand, pocket open — deposited as an apo form with the selectivity pocket opened |
+| **5DY4** | 1.77 Å | 5GN, a brominated SirReal analogue | T = 0.81 to SirReal2 |
+| **5DY5** | 1.95 Å | 5GR, the SirReal affinity probe | T = 0.56 |
+| **5YQL** | 1.60 Å | A2I, shares the head group only | T = 0.46 |
+| **9FDT** | 1.60 Å | A1IBW, a small pyrazole fragment | T = 0.19 |
+| **5Y0Z** | 2.00 Å | 8K9 (NPD11033), an unrelated chemotype | T = 0.12 |
 
-The last two were added in version 3; versions 1 and 2 used the first five. One docking box serves all five: centred on the crystal ligand, padded by 8 Å. This tells the program **where** the site is, which is the normal assumption in re-docking studies; it does not tell it the pose.
+Versions 1 and 2 used the first five; version 3 added 5MAT and 9FDR; version 4 added the last five, chosen to span the similarity range. **T** is the Tanimoto similarity of the bound ligand to SirReal2 (Morgan fingerprints, radius 2, 1024 bits — the same settings as the companion [binding-affinity-leakage](https://github.com/officeofalper/binding-affinity-leakage) project).
+
+9FDT is deposited only as mmCIF; it is converted to PDB with `gemmi` before use. Every one of these ligands was checked to sit in the same site before being used: after superposition each one's heavy atoms lie entirely inside the docking box, with centroids 0.4–2.8 Å from the SirReal2 crystal pose.
+
+One docking box serves every receptor: centred on the crystal ligand, padded by 8 Å. This tells the program **where** the site is, which is the normal assumption in re-docking studies; it does not tell it the pose.
 
 ### Docking
 
@@ -193,12 +202,50 @@ In the first five structures, *is a ligand bound?* and *is the pocket open?* alw
 
 ---
 
+### 3.7 Version 4 — can you tell before docking which receptor to trust?
+
+Version 3 left a practical problem. Pocket shape predicts the outcome, but the way it was measured — counting how many atoms of the correct pose overlap the protein — needs the correct pose, so it cannot be computed in a real project. A usable rule has to rest on something known in advance.
+
+The candidate: **the chemical similarity of the ligand that shaped the pocket**. Both molecules are known before any docking runs. Five further co-crystals span the range from "SirReal2 plus a bromine" to "nothing in common".
+
+| Receptor | Ligand that shaped the pocket | Tanimoto | Clashes | Score | RMSD | Correct |
+|---|---|---|---|---|---|---|
+| 4RMH | SirReal2 (self) | 1.000 | 0 / 29 | −12.19 | 0.35 Å | 100% |
+| 4RMG | SirReal2, other crystal | 1.000 | 0 / 29 | −10.91 | 0.90 Å | 60% |
+| **5DY4** | brominated SirReal analogue | 0.814 | 0 / 29 | −11.34 | **0.52 Å** | **100%** |
+| **5DY5** | SirReal affinity probe | 0.558 | 0 / 29 | −11.62 | **0.49 Å** | **100%** |
+| **5YQL** | shared head group, different tail | 0.463 | 0 / 29 | −11.36 | **0.58 Å** | **100%** |
+| 5MAT | thienopyrimidinone | 0.235 | 9 / 29 | **−12.45** | 9.67 Å | 0% |
+| **9FDT** | small pyrazole fragment | 0.194 | 6 / 29 | −10.82 | 8.91 Å | 0% |
+| **5Y0Z** | NPD11033, unrelated | 0.120 | 7 / 29 | −10.48 | 8.46 Å | 0% |
+
+**The separation is clean, and it is a cliff rather than a slope.** Every structure at T ≥ 0.46 succeeds — all five, with zero clashing atoms and a median RMSD under 0.6 Å. Every structure at T ≤ 0.24 fails — all three, with 6 to 9 clashing atoms and the pose 8 to 10 Å away. There is no intermediate case in this set.
+
+**The prediction was wrong where it mattered least and right where it mattered most.** Before running it I predicted 5DY4 would succeed, 5DY5 and 5YQL would be borderline, and the three low-similarity structures would fail. The failures came out as predicted, but 5DY5 (T = 0.56) and 5YQL (T = 0.46) both succeeded at 100%, with poses tighter than 4RMG's — the second crystal of SirReal2 itself. So the usable threshold is more permissive than I expected: a ligand sharing only the head group was enough.
+
+**5MAT was not an anecdote.** All three low-similarity receptors fail, and all three report scores indistinguishable from the successes:
+
+| | Score range (kcal/mol) |
+|---|---|
+| Receptors where docking is correct | −10.91 … −12.19 |
+| Receptors where docking is 8–10 Å wrong | −10.48 … **−12.45** |
+
+The ranges overlap completely and **the single best score in the entire study belongs to a wrong answer** (5MAT, −12.45, 9.67 Å). Section 3.1 reported that the score falls by only 3.5 kcal/mol when the receptor is wrong; version 4 shows the stronger claim — across eight receptors, the score carries no information about which one to trust.
+
+**Why similarity works** (Figure 8B): a ligand chemically similar to yours leaves behind a pocket shaped to accommodate yours. Clash count is zero for every success and 6–9 for every failure, so ligand similarity predicts pocket compatibility, which predicts the docking result. The chain of reasoning runs from something you know in advance to something you want to know.
+
+**The practical rule**, stated as narrowly as the data allow: *when choosing among co-crystal structures of a target, prefer the one whose bound ligand is most similar to your compound.* On this target the threshold sits somewhere between T = 0.24 and T = 0.46. Where that line falls in general, this experiment cannot say.
+
+---
+
 ## 4. What this does not show
 
 - **One ligand, one target.** Every number comes from SirReal2 and SIRT2. SIRT2 was chosen *because* its induced fit is dramatic, so the size of the effect here is not an estimate of the average case — it is close to a worst case. Nothing here says how often rigid-receptor docking fails in general.
-- **Seven structures is a small n.** The correlations in Section 3.6 are reported with their p-values and should be read as a direction, not as evidence. The comparison that carries the argument is the single contrast between 9FDR and 5MAT, not the rank statistic.
-- **"Pocket open" is measured by the answer.** Clash count is computed against the SirReal2 crystal pose, so it measures *openness to this ligand*, not openness in the abstract. That is the right quantity for this question but it is circular as a general descriptor: you cannot compute it prospectively, because it needs the answer. A prospective version would need a pocket-volume or shape measure that does not reference the ligand.
+- **Eight structures is a small n.** Rank correlations are reported (Section 3.6, and ρ = −0.69 for similarity against RMSD) but they understate a step-shaped relation and are weakened by the tie at T = 1.000. What carries the argument is the perfect separation of the two groups, not the correlation coefficient.
+- **The threshold is bracketed, not located.** No structure in this set falls between T = 0.235 and T = 0.463, so the cliff could be anywhere in that gap. Finding where it actually sits would need co-crystals with ligands of intermediate similarity.
+- **Clash count is measured using the answer.** It is computed against the SirReal2 crystal pose, so it measures *openness to this ligand* and cannot be computed prospectively. Section 3.7 is the response to that objection: ligand similarity is a stand-in that needs nothing but the two molecules. It is a weaker descriptor — it says nothing about pockets directly — and it was validated here on one target only.
 - **5MAT and 9FDR may have been opened by their own ligands.** 9FDR is ligand-free as deposited, but the crystals were obtained by adapting the protein to a different compound. Neither structure is a clean sample of "what the unbound enzyme does on its own".
+- **Similarity and provenance are confounded.** Four of the five high-similarity structures come from the same laboratory and the same series of papers, so they may share crystallisation conditions and refinement practice as well as chemistry. A chemically similar ligand and a procedurally similar structure cannot be separated here.
 - **The site is given.** The box is centred on the known ligand. Blind docking, where the site must also be found, is a harder and separate problem.
 - **Cofactors are removed from every receptor.** This isolates protein conformation, but it is not how one would dock for a real prediction: SIRT2's pocket forms at an interface where NAD⁺ sits, and a realistic setup would keep it.
 - **One program, one scoring function.** A different program might behave differently. The claim that a bad pose scores well enough to pass is a claim about Vina's function, not about scoring functions in general — though the clash energies in Section 3.4 are a physical fact that any function would have to reproduce.
@@ -207,10 +254,10 @@ In the first five structures, *is a ligand bound?* and *is the pocket open?* alw
 
 ## 5. What I would do next
 
-Version 3 answered the question it was built for and raised a sharper one. Three directions, in the order I would take them:
+Version 4 answered the question version 3 raised, and the next three follow from it:
 
-1. **Is the 5MAT effect general?** It produced the best score in the study while being 9.7 Å wrong. One structure is an anecdote. The test: assemble every SIRT2 co-crystal with a non-SirReal ligand in the selectivity pocket — 5MAR, 5Y5N, 5Y0Z, 5D7P and 5D7Q are candidates reported in the literature — and ask how often an open-but-differently-shaped pocket produces a confidently-scored wrong answer. If it is common, it is a practical warning about receptor choice in virtual screening rather than a curiosity.
-2. **A prospective measure of openness.** Section 4 notes that clash count needs the answer in order to be computed. Replacing it with a ligand-free descriptor — pocket volume, or the separation between the residues lining the two walls — would let the same ranking be produced *before* docking, which is when it would be useful.
+1. **Where exactly is the cliff?** The threshold is bracketed between T = 0.24 and T = 0.46 because no available structure falls in between. Co-crystals with ligands of intermediate similarity would locate it — and would also show whether it really is a step or just looks like one because of where the samples happen to sit.
+2. **Does the rule hold on another target?** This is the test that matters, and SIRT2 cannot provide it. A protein with many co-crystals across several chemotypes — CDK2 and HSP90 are the obvious candidates — would allow the same axis to be built for a different ligand and a different pocket. If the separation reappears, the rule is about docking; if it does not, it is about SIRT2.
 3. **Does the right receptor rescue enrichment, not just pose?** This repository measures pose accuracy for one known binder. What a screening project cares about is whether actives rank above decoys. That needs a curated active/decoy set, and therefore ChEMBL.
 
 Friedrich et al. (2025) state directly that the selectivity pocket is absent in the previously available SIRT2 apo structures — independent confirmation of Section 3.4, reached from crystallography rather than from docking.
@@ -222,7 +269,9 @@ Friedrich et al. (2025) state directly that the selectivity pocket is absent in 
 ```bash
 pip install -r requirements.txt     # rdkit, meeko, numpy, scipy, matplotlib
 # AutoDock Vina 1.2.5 binary, and Open Babel on the PATH
-# Put 4RMH, 4RMG, 1J8F, 3ZGO, 3ZGV (and for version 3, 5MAT and 9FDR) in structures/
+# structures/ needs: 4RMH 4RMG 1J8F 3ZGO 3ZGV           (versions 1-2)
+#                     5MAT 9FDR                          (version 3)
+#                     5DY4 5DY5 5YQL 5Y0Z 9FDT.cif       (version 4)
 
 python prep_receptors.py     # superpose, strip to protein, convert
 python redock_crossdock.py   # version 1  (~15 min, 25 docking runs)
@@ -232,6 +281,8 @@ python ensemble.py           # version 2c (seconds, reuses version 1)
 python v2_figures.py         # figures 3-6
 python v3_newstructures.py   # version 3  (~6 min; needs 5MAT and 9FDR too)
 python v3_figures.py         # figure 7, and the seven-structure table
+python v4_similarity.py      # version 4  (~15 min, 25 runs; resumable)
+python v4_figures.py         # figure 8, and the eight-structure table
 ```
 
 `VINA_BIN` overrides the path to the Vina executable. `effort_sweep.py` saves after every run and skips what it has already done, so it can be interrupted.
@@ -248,7 +299,11 @@ Structures and the phenomenon:
 - Finnin, M.S., Donigian, J.R., & Pavletich, N.P. (2001). Structure of the histone deacetylase SIRT2. *Nature Structural Biology*, 8, 621–625. https://doi.org/10.1038/89668 — 1J8F.
 - Moniot, S., Schutkowski, M., & Steegborn, C. (2013). Crystal structure analysis of human Sirt2 and its ADP-ribose complex. *Journal of Structural Biology*, 182, 136. https://doi.org/10.1016/j.jsb.2013.02.012 — 3ZGO, 3ZGV.
 - Sundriyal, S., Moniot, S., Mahmud, Z., et al. (2017). Thienopyrimidinone based sirtuin-2 (SIRT2)-selective inhibitors bind in the ligand induced selectivity pocket. *Journal of Medicinal Chemistry*, 60, 1928–1945. https://doi.org/10.1021/acs.jmedchem.6b01690 — 5MAT.
-- Friedrich, F., Schiedel, M., Swyter, S., et al. (2025). Efficient crystallization of apo Sirt2 for small-molecule soaking and structural analysis of ligand interactions. *Journal of Medicinal Chemistry*, 68, 10771–10780. https://doi.org/10.1021/acs.jmedchem.4c02896 — 9FDR.
+- Friedrich, F., Schiedel, M., Swyter, S., et al. (2025). Efficient crystallization of apo Sirt2 for small-molecule soaking and structural analysis of ligand interactions. *Journal of Medicinal Chemistry*, 68, 10771–10780. https://doi.org/10.1021/acs.jmedchem.4c02896 — 9FDR and 9FDT.
+- Schiedel, M., Rumpf, T., Karaman, B., et al. (2016). Aminothiazoles as potent and selective Sirt2 inhibitors: a structure–activity relationship study. *Journal of Medicinal Chemistry*, 59, 1599–1612. https://doi.org/10.1021/acs.jmedchem.5b01517 — 5DY4.
+- Schiedel, M., Rumpf, T., Karaman, B., et al. (2016). Structure-based development of an affinity probe for sirtuin 2. *Angewandte Chemie International Edition*, 55, 2252–2256. https://doi.org/10.1002/anie.201509843 — 5DY5.
+- Yang, L.-L., Wang, H.-L., Zhong, L., et al. (2018). X-ray crystal structure guided discovery of new selective, substrate-mimicking sirtuin 2 inhibitors that exhibit activities against non-small cell lung cancer cells. *European Journal of Medicinal Chemistry*, 155, 806–823. https://doi.org/10.1016/j.ejmech.2018.06.041 — 5YQL.
+- Kudo, N., Ito, A., Arata, M., et al. (2018). Identification of a novel small molecule that inhibits deacetylase but not defatty-acylase reaction catalysed by SIRT2. *Philosophical Transactions of the Royal Society B*, 373, 20170070. https://doi.org/10.1098/rstb.2017.0070 — 5Y0Z.
 
 Software:
 
@@ -256,4 +311,5 @@ Software:
 - Trott, O., & Olson, A.J. (2010). AutoDock Vina: improving the speed and accuracy of docking with a new scoring function, efficient optimization, and multithreading. *Journal of Computational Chemistry*, 31, 455–461. https://doi.org/10.1002/jcc.21334
 - O'Boyle, N.M., Banck, M., James, C.A., et al. (2011). Open Babel: an open chemical toolbox. *Journal of Cheminformatics*, 3, 33. https://doi.org/10.1186/1758-2946-3-33
 - RDKit: open-source cheminformatics. https://www.rdkit.org
+- Wojdyr, M. (2022). GEMMI: a library for structural biology. *Journal of Open Source Software*, 7(73), 4200. https://doi.org/10.21105/joss.04200
 - Meeko, Forli Lab. https://github.com/forlilab/Meeko

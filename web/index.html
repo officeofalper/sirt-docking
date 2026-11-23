@@ -191,11 +191,32 @@ footer a{color:inherit}
 <section class="band">
 <div class="wrap">
 <h2>5. Peki cebin açık olması yetiyor mu?</h2>
-<p>İlk beş yapıda iki şey hep birlikte hareket ediyordu: <em>ligand bağlı mı</em> ve <em>cep açık mı</em>. İki yapı daha bu düğümü çözüyor. <strong>5MAT</strong>'ta tamamen farklı bir kimyasal sınıftan bir inhibitör aynı cebi açmış; <strong>9FDR</strong>'de hiç ligand yok ama cep açık olarak depolanmış.</p>
+<p>İlk beş yapıda iki şey hep birlikte hareket ediyordu: <em>ligand bağlı mı</em> ve <em>cep açık mı</em>. Yedi yapı daha bu düğümü çözüyor. <strong>5MAT</strong>'ta tamamen farklı bir kimyasal sınıftan bir inhibitör aynı cebi açmış; <strong>9FDR</strong>'de hiç ligand yok ama cep açık olarak depolanmış. Tabloyu çakışan atom sayısına göre sıralı oku — aşağıdan yukarı doğru cep gittikçe açılıyor.</p>
 <div class="stage">
   <table id="two-by-two"><thead><tr><th>Yapı</th><th>Cep</th><th>Kristalde ligand</th>
   <th class="n">Çakışan atom</th><th class="n">Skor</th><th class="n">Docking RMSD</th></tr></thead><tbody></tbody></table>
   <p class="verdict" id="tbt-verdict"></p>
+</div>
+</div>
+</section>
+
+<!-- 6. PICK A RECEPTOR ------------------------------------------------ -->
+<section class="band">
+<div class="wrap">
+<h2>6. Hangi yapıyı seçerdin?</h2>
+<p>Bölüm 5 cebin açık olmasının yetmediğini gösterdi. Ama o ölçü — doğru pozun kaç atomunun proteine girdiği — <strong>doğru pozu gerektiriyor</strong>, yani gerçek bir projede hesaplanamıyor. Peki docking'den <em>önce</em> bilinebilen bir şey var mı?</p>
+<p>Aşağıda sekiz yapı var ve sadece <strong>önceden bilebileceğin şeyler</strong> gösteriliyor: çözünürlük, kristalde bağlı ligand, ve o ligandın SirReal2'ye Tanimoto benzerliği. Birini seç, sonra sonucu aç.</p>
+<div class="lab">
+  <div class="stage">
+    <div class="fig" style="height:300px"><canvas id="pick-c"></canvas></div>
+    <div class="stats" id="pick-stats" style="margin-top:12px"></div>
+    <p class="verdict" id="pick-verdict"></p>
+  </div>
+  <div class="ctrl">
+    <div class="grp">Alıcını seç</div>
+    <div id="pick-list" style="display:flex;flex-direction:column;gap:7px"></div>
+    <button id="pick-reveal" style="margin-top:4px">Sonucu göster</button>
+  </div>
 </div>
 </div>
 </section>
@@ -424,12 +445,109 @@ function twoByTwo(){
     Yani en tehlikeli alıcı, apaçık kapalı olan değil; makul görünen ama yanlış şekilli olandır.`;
 }
 
+/* ---------- 6. pick a receptor ---------- */
+const PICKABLE = Object.keys(META).filter(p => META[p].tan !== null)
+  .sort((a, b) => META[b].tan - META[a].tan);
+let picked = null, revealed = false;
+const medOf = p => {const v = Object.keys(TOP[p]).map(s => TOP[p][s][1]).sort((a,b)=>a-b);
+  return v[(v.length - 1) >> 1];};
+const scoreOf = p => {const k = Object.keys(TOP[p]); 
+  return k.reduce((a,s) => a + TOP[p][s][0], 0) / k.length;};
+
+document.getElementById('pick-list').innerHTML = PICKABLE.map(p => {
+  const m = META[p];
+  return `<button data-pick="${p}" aria-pressed="false" style="justify-content:flex-start;
+    text-align:left;height:auto;padding:8px 10px;line-height:1.35">
+    <span style="display:block"><strong>${p}</strong>
+      <span style="color:var(--muted);font-weight:400"> · ${m.res} Å</span></span>
+    <span style="display:block;font-size:12.5px;color:var(--muted);font-weight:400">
+      ${m.bound} · T = ${fmt(m.tan)}</span></button>`;}).join('');
+
+function pickFig() {
+  const [x, W, H] = setup(document.getElementById('pick-c'));
+  const L = 54, R = 16, T = 16, B = 46, iw = W - L - R, ih = H - T - B, maxY = 12;
+  const px = v => L + v * iw, py = v => T + ih - Math.min(v, maxY) / maxY * ih;
+  x.strokeStyle = css('--line'); x.fillStyle = css('--muted'); x.textAlign = 'right';
+  for (let v = 0; v <= 12; v += 3) {
+    x.beginPath(); x.moveTo(L, py(v)); x.lineTo(W - R, py(v)); x.stroke();
+    x.fillText(v + ' Å', L - 8, py(v) + 4);
+  }
+  x.textAlign = 'center';
+  for (let v = 0; v <= 1; v += 0.2) x.fillText(v.toFixed(1).replace('.', ','), px(v), H - 26);
+  x.fillText('cebi açan ligandın SirReal2’ye Tanimoto benzerliği', L + iw / 2, H - 8);
+  x.setLineDash([5, 4]); x.strokeStyle = css('--ink'); x.globalAlpha = .55;
+  x.beginPath(); x.moveTo(L, py(SUCCESS)); x.lineTo(W - R, py(SUCCESS)); x.stroke();
+  x.setLineDash([]); x.globalAlpha = 1;
+  x.fillStyle = css('--muted'); x.textAlign = 'left';
+  x.fillText('2 Å', L + 4, py(SUCCESS) - 6);
+
+  PICKABLE.forEach(p => {
+    const rm = medOf(p), isPick = p === picked;
+    if (!revealed && !isPick) {                       // unknown until revealed
+      x.fillStyle = css('--line');
+      x.beginPath(); x.arc(px(META[p].tan), T + ih - 6, 5, 0, 7); x.fill();
+      return;
+    }
+    x.fillStyle = rm < SUCCESS ? css('--other') : css('--warn');
+    x.beginPath(); x.arc(px(META[p].tan), py(rm), isPick ? 9 : 6, 0, 7); x.fill();
+    // 4RMH and 4RMG share T = 1.00; their RMSDs differ, so they already separate
+    if (isPick) { x.strokeStyle = css('--ink'); x.lineWidth = 2; x.stroke(); }
+    if (revealed) {                       // label inward near the right edge
+      const right = META[p].tan > 0.9;
+      x.fillStyle = css('--muted'); x.font = '11.5px Inter,sans-serif';
+      x.textAlign = right ? 'right' : 'left';
+      x.fillText(p, px(META[p].tan) + (right ? -11 : 9), py(rm) + 4);
+      x.font = '12px Inter,sans-serif';
+    }
+  });
+  if (!revealed) {
+    x.fillStyle = css('--muted'); x.textAlign = 'center';
+    x.fillText('sonuçlar gizli — bir yapı seç ve “Sonucu göster”e bas', L + iw / 2, T + ih / 2);
+  }
+}
+
+function pickUpdate() {
+  const st = document.getElementById('pick-stats'), vd = document.getElementById('pick-verdict');
+  if (!picked) { st.innerHTML = ''; vd.textContent = 'Soldaki listeden bir yapı seç.'; pickFig(); return; }
+  const m = META[picked], rm = medOf(picked), sc = scoreOf(picked), ok = rm < SUCCESS;
+  if (!revealed) {
+    st.innerHTML = `<div class="stat"><b>${picked}</b><span>seçtiğin yapı</span></div>
+      <div class="stat"><b>${fmt(m.tan)}</b><span>ligand benzerliği</span></div>
+      <div class="stat"><b>${m.res} Å</b><span>çözünürlük</span></div>`;
+    vd.innerHTML = 'Docking’den önce bilebileceklerin bunlar. “Sonucu göster”e bas.';
+  } else {
+    st.innerHTML = `<div class="stat"><b>${picked}</b><span>seçtiğin yapı</span></div>
+      <div class="stat"><b>${fmt(m.tan)}</b><span>ligand benzerliği</span></div>
+      <div class="stat"><b>${fmt(sc)}</b><span>kcal/mol</span></div>
+      <div class="stat"><b class="${ok ? 'ok' : 'bad'}">${fmt(rm)} Å</b><span>gerçek hata</span></div>`;
+    vd.innerHTML = ok
+      ? `<span class="ok">İyi seçim.</span> Poz ${fmt(rm)} Å — 2 Å eşiğinin altında.
+         Benzerliği ${fmt(m.tan)} olan bu ligand, senin molekülüne uyan bir cep bırakmış.`
+      : `<span class="bad">Yanlış poz.</span> Poz ${fmt(rm)} Å uzakta, ama skor ${fmt(sc)} kcal/mol —
+         doğru sonuç veren yapılarınkinden ayırt edilemez. Benzerliği ${fmt(m.tan)} olan bu ligand,
+         cebi <em>açmış</em> ama senin molekülüne uymayan bir şekilde açmış.`;
+    const cut = PICKABLE.filter(p => medOf(p) < SUCCESS).map(p => META[p].tan);
+    vd.innerHTML += ` <span style="color:var(--muted);font-weight:400">Sekiz yapıda ayrım kusursuz:
+      benzerliği ${fmt(Math.min(...cut))} ve üstü olan beş yapının beşi de doğru, 0,24 ve altındaki
+      üçünün üçü de yanlış. Arada hiç yapı yok, yani eşiğin tam yeri belli değil.</span>`;
+  }
+  pickFig();
+}
+document.getElementById('pick-list').addEventListener('click', e => {
+  const b = e.target.closest('[data-pick]'); if (!b) return;
+  picked = b.dataset.pick;
+  document.querySelectorAll('[data-pick]').forEach(x =>
+    x.setAttribute('aria-pressed', x.dataset.pick === picked));
+  pickUpdate();
+});
+document.getElementById('pick-reveal').onclick = () => { revealed = true; pickUpdate(); };
+
 /* ---------- go ---------- */
-function draw(){sweep();funnel();}
-ensemble();pocketFit();twoByTwo();draw();
+function draw(){sweep();funnel();pickFig();}
+ensemble();pocketFit();twoByTwo();pickUpdate();draw();
 addEventListener('resize',draw);
 matchMedia('(prefers-color-scheme:dark)').addEventListener('change',()=>{
-  ensemble();pocketFit();twoByTwo();draw();});
+  ensemble();pocketFit();twoByTwo();pickUpdate();draw();});
 </script>
 </body>
 </html>
